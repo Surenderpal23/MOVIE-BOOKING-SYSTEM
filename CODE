@@ -94,3 +94,297 @@ CREATE TABLE Payments (
     Payment_ID INT PRIMARY KEY AUTO_INCREMENT,
     Booking_ID INT NOT NULL,
     Amount DECIMAL(10,2) NOT NULL,
+    Payment_Method VARCHAR(30),
+    Payment_Status VARCHAR(20) DEFAULT 'Pending',
+    Payment_Date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Booking_ID) REFERENCES Bookings(Booking_ID),
+    CHECK (Amount > 0)
+);
+
+CREATE TABLE Reviews (
+    Review_ID INT PRIMARY KEY AUTO_INCREMENT,
+    User_ID INT NOT NULL,
+    Movie_ID INT NOT NULL,
+    Rating INT NOT NULL,
+    Comment VARCHAR(500),
+    Review_Date DATE DEFAULT (CURRENT_DATE),
+    FOREIGN KEY (User_ID) REFERENCES Users(User_ID),
+    FOREIGN KEY (Movie_ID) REFERENCES Movies(Movie_ID),
+    CHECK (Rating BETWEEN 1 AND 5),
+    UNIQUE (User_ID, Movie_ID)
+);
+
+CREATE TABLE Refunds (
+    Refund_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Payment_ID INT NOT NULL,
+    Refund_Amount DECIMAL(10,2) NOT NULL,
+    Refund_Date DATE DEFAULT (CURRENT_DATE),
+    Refund_Status VARCHAR(20) DEFAULT 'Pending',
+    FOREIGN KEY (Payment_ID) REFERENCES Payments(Payment_ID),
+    CHECK (Refund_Amount > 0)
+);
+
+-- ------------------------------------------------------------
+-- 2. INSERT SAMPLE DATA
+-- Insert parent records before child records.
+-- ------------------------------------------------------------
+
+INSERT INTO Users (Name, Email, Phone, Password) VALUES
+('Rahul Sharma', 'rahul@example.com', '9876500001', 'demo_hash_1'),
+('Priya Singh', 'priya@example.com', '9876500002', 'demo_hash_2'),
+('Aman Verma', 'aman@example.com', '9876500003', 'demo_hash_3');
+
+INSERT INTO Movies (Title, Genre, Language, Duration, Release_Date, Rating) VALUES
+('Inception', 'Sci-Fi', 'English', 148, '2010-07-16', 8.8),
+('Interstellar', 'Sci-Fi', 'English', 169, '2014-11-07', 8.7),
+('3 Idiots', 'Comedy', 'Hindi', 170, '2009-12-25', 8.4);
+
+INSERT INTO Theatres (Theatre_Name, City, Address) VALUES
+('City Cinema', 'Ludhiana', 'Ferozepur Road'),
+('Grand Movies', 'Chandigarh', 'Sector 17');
+
+INSERT INTO Screens (Theatre_ID, Screen_Name, Capacity) VALUES
+(1, 'Screen 1', 100),
+(1, 'Screen 2', 80),
+(2, 'Screen 1', 120);
+
+INSERT INTO Shows (Movie_ID, Screen_ID, Show_Date, Show_Time, Ticket_Price) VALUES
+(1, 1, '2026-11-01', '18:30:00', 200.00),
+(2, 2, '2026-11-01', '20:00:00', 250.00),
+(3, 3, '2026-11-02', '17:00:00', 180.00);
+
+INSERT INTO Seats (Screen_ID, Seat_Number, Seat_Type) VALUES
+(1, 'A1', 'Regular'),
+(1, 'A2', 'Regular'),
+(1, 'A3', 'Premium'),
+(2, 'B1', 'Regular'),
+(2, 'B2', 'Premium'),
+(3, 'C1', 'Regular');
+
+INSERT INTO Bookings (User_ID, Show_ID, Total_Amount, Booking_Status) VALUES
+(1, 1, 400.00, 'Confirmed'),
+(2, 2, 250.00, 'Pending');
+
+INSERT INTO Booking_Seats (Booking_ID, Seat_ID, Price) VALUES
+(1, 1, 200.00),
+(1, 2, 200.00),
+(2, 4, 250.00);
+
+INSERT INTO Payments (Booking_ID, Amount, Payment_Method, Payment_Status) VALUES
+(1, 400.00, 'UPI', 'Successful'),
+(2, 250.00, 'Card', 'Pending');
+
+INSERT INTO Reviews (User_ID, Movie_ID, Rating, Comment, Review_Date) VALUES
+(1, 1, 5, 'Excellent movie', '2026-10-20'),
+(2, 2, 5, 'Amazing story', '2026-10-21');
+
+INSERT INTO Refunds (Payment_ID, Refund_Amount, Refund_Date, Refund_Status) VALUES
+(1, 400.00, '2026-10-22', 'Pending');
+
+-- ------------------------------------------------------------
+-- 3. TRIGGERS
+-- ------------------------------------------------------------
+
+DELIMITER //
+
+CREATE TRIGGER trg_validate_review
+BEFORE INSERT ON Reviews
+FOR EACH ROW
+BEGIN
+    IF NEW.Rating < 1 OR NEW.Rating > 5 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Rating must be between 1 and 5';
+    END IF;
+END//
+
+CREATE TRIGGER trg_validate_payment
+BEFORE INSERT ON Payments
+FOR EACH ROW
+BEGIN
+    IF NEW.Amount <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Payment amount must be greater than zero';
+    END IF;
+END//
+
+CREATE TRIGGER trg_validate_refund
+BEFORE INSERT ON Refunds
+FOR EACH ROW
+BEGIN
+    IF NEW.Refund_Amount <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Refund amount must be greater than zero';
+    END IF;
+END//
+
+DELIMITER ;
+
+-- ------------------------------------------------------------
+-- 4. STORED PROCEDURES
+-- ------------------------------------------------------------
+
+DELIMITER //
+
+CREATE PROCEDURE get_movie_shows(IN p_movie_id INT)
+BEGIN
+    SELECT
+        M.Title,
+        S.Show_Date,
+        S.Show_Time,
+        SC.Screen_Name,
+        T.Theatre_Name,
+        T.City,
+        S.Ticket_Price
+    FROM Shows AS S
+    JOIN Movies AS M ON S.Movie_ID = M.Movie_ID
+    JOIN Screens AS SC ON S.Screen_ID = SC.Screen_ID
+    JOIN Theatres AS T ON SC.Theatre_ID = T.Theatre_ID
+    WHERE M.Movie_ID = p_movie_id
+    ORDER BY S.Show_Date, S.Show_Time;
+END//
+
+CREATE PROCEDURE get_user_bookings(IN p_user_id INT)
+BEGIN
+    SELECT
+        B.Booking_ID,
+        U.Name,
+        M.Title,
+        S.Show_Date,
+        S.Show_Time,
+        B.Total_Amount,
+        B.Booking_Status
+    FROM Bookings AS B
+    JOIN Users AS U ON B.User_ID = U.User_ID
+    JOIN Shows AS S ON B.Show_ID = S.Show_ID
+    JOIN Movies AS M ON S.Movie_ID = M.Movie_ID
+    WHERE U.User_ID = p_user_id
+    ORDER BY B.Booking_Date DESC;
+END//
+
+CREATE PROCEDURE get_movie_reviews(IN p_movie_id INT)
+BEGIN
+    SELECT
+        M.Title,
+        U.Name,
+        R.Rating,
+        R.Comment,
+        R.Review_Date
+    FROM Reviews AS R
+    JOIN Movies AS M ON R.Movie_ID = M.Movie_ID
+    JOIN Users AS U ON R.User_ID = U.User_ID
+    WHERE M.Movie_ID = p_movie_id
+    ORDER BY R.Review_Date DESC;
+END//
+
+DELIMITER ;
+
+-- ------------------------------------------------------------
+-- 5. JOIN QUERIES AND REPORTS
+-- ------------------------------------------------------------
+
+-- A. Display all movies and their show timings
+SELECT M.Title, S.Show_Date, S.Show_Time, S.Ticket_Price
+FROM Movies AS M
+JOIN Shows AS S ON M.Movie_ID = S.Movie_ID;
+
+-- B. Display theatres and their screens
+SELECT T.Theatre_Name, T.City, SC.Screen_Name, SC.Capacity
+FROM Theatres AS T
+JOIN Screens AS SC ON T.Theatre_ID = SC.Theatre_ID;
+
+-- C. Display customer booking details
+SELECT
+    B.Booking_ID, U.Name, M.Title,
+    S.Show_Date, S.Show_Time,
+    B.Total_Amount, B.Booking_Status
+FROM Bookings AS B
+JOIN Users AS U ON B.User_ID = U.User_ID
+JOIN Shows AS S ON B.Show_ID = S.Show_ID
+JOIN Movies AS M ON S.Movie_ID = M.Movie_ID;
+
+-- D. Display payments for all bookings, including unpaid bookings
+SELECT
+    B.Booking_ID, B.Total_Amount,
+    P.Payment_ID, P.Amount, P.Payment_Method, P.Payment_Status
+FROM Bookings AS B
+LEFT JOIN Payments AS P ON B.Booking_ID = P.Booking_ID;
+
+-- E. Display movie reviews with customer names
+SELECT M.Title, U.Name, R.Rating, R.Comment, R.Review_Date
+FROM Reviews AS R
+JOIN Movies AS M ON R.Movie_ID = M.Movie_ID
+JOIN Users AS U ON R.User_ID = U.User_ID;
+
+-- F. Calculate average review rating for each movie
+SELECT
+    M.Title,
+    ROUND(AVG(R.Rating), 2) AS Average_Rating,
+    COUNT(R.Review_ID) AS Total_Reviews
+FROM Movies AS M
+LEFT JOIN Reviews AS R ON M.Movie_ID = R.Movie_ID
+GROUP BY M.Movie_ID, M.Title
+ORDER BY Average_Rating DESC;
+
+-- G. Display refund details with original payment information
+SELECT
+    R.Refund_ID, P.Booking_ID,
+    R.Refund_Amount, R.Refund_Date, R.Refund_Status
+FROM Refunds AS R
+JOIN Payments AS P ON R.Payment_ID = P.Payment_ID;
+
+-- H. Count bookings for every customer, including customers with zero bookings
+SELECT U.User_ID, U.Name, COUNT(B.Booking_ID) AS Total_Bookings
+FROM Users AS U
+LEFT JOIN Bookings AS B ON U.User_ID = B.User_ID
+GROUP BY U.User_ID, U.Name;
+
+-- I. Total number of movies
+SELECT COUNT(*) AS Total_Movies FROM Movies;
+
+-- J. Total number of bookings
+SELECT COUNT(*) AS Total_Bookings FROM Bookings;
+
+-- K. Total recorded booking amount (not necessarily collected revenue)
+SELECT SUM(Total_Amount) AS Total_Booking_Amount FROM Bookings;
+
+-- L. Payment status report
+SELECT
+    B.Booking_ID, U.Name, B.Total_Amount,
+    P.Amount AS Payment_Amount, P.Payment_Method, P.Payment_Status
+FROM Bookings AS B
+JOIN Users AS U ON B.User_ID = U.User_ID
+LEFT JOIN Payments AS P ON B.Booking_ID = P.Booking_ID;
+
+-- M. Refund report
+SELECT
+    R.Refund_ID, P.Booking_ID,
+    R.Refund_Amount, R.Refund_Date, R.Refund_Status
+FROM Refunds AS R
+JOIN Payments AS P ON R.Payment_ID = P.Payment_ID;
+
+-- ------------------------------------------------------------
+-- 6. TEST THE STORED PROCEDURES
+-- ------------------------------------------------------------
+
+CALL get_movie_shows(1);
+CALL get_user_bookings(1);
+CALL get_movie_reviews(1);
+
+-- ------------------------------------------------------------
+-- 7. VERIFY TABLES AND SAMPLE DATA
+-- ------------------------------------------------------------
+
+SHOW TABLES;
+SELECT * FROM Users;
+SELECT * FROM Movies;
+SELECT * FROM Theatres;
+SELECT * FROM Screens;
+SELECT * FROM Shows;
+SELECT * FROM Seats;
+SELECT * FROM Bookings;
+SELECT * FROM Booking_Seats;
+SELECT * FROM Payments;
+SELECT * FROM Reviews;
+SELECT * FROM Refunds;
+
+-- END OF MOVIE BOOKING SYSTEM PROJECT
