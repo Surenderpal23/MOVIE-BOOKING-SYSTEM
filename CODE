@@ -1,0 +1,96 @@
+-- ============================================================
+-- MOVIE BOOKING SYSTEM - COMPLETE DBMS PROJECT
+-- Technology: MySQL 8.x
+-- Run this script in MySQL Workbench on a fresh database.
+-- ============================================================
+
+CREATE DATABASE MovieBooking;
+USE MovieBooking;
+
+-- ------------------------------------------------------------
+-- 1. CREATE TABLES
+-- ------------------------------------------------------------
+
+CREATE TABLE Users (
+    User_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    Phone VARCHAR(15),
+    Password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Movies (
+    Movie_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Title VARCHAR(150) NOT NULL,
+    Genre VARCHAR(50),
+    Language VARCHAR(50),
+    Duration INT,
+    Release_Date DATE,
+    Rating DECIMAL(2,1),
+    CHECK (Duration IS NULL OR Duration > 0),
+    CHECK (Rating IS NULL OR (Rating >= 0 AND Rating <= 10))
+);
+
+CREATE TABLE Theatres (
+    Theatre_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Theatre_Name VARCHAR(100) NOT NULL,
+    City VARCHAR(50),
+    Address VARCHAR(200)
+);
+
+CREATE TABLE Screens (
+    Screen_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Theatre_ID INT NOT NULL,
+    Screen_Name VARCHAR(50) NOT NULL,
+    Capacity INT,
+    FOREIGN KEY (Theatre_ID) REFERENCES Theatres(Theatre_ID),
+    CHECK (Capacity IS NULL OR Capacity > 0)
+);
+
+CREATE TABLE Shows (
+    Show_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Movie_ID INT NOT NULL,
+    Screen_ID INT NOT NULL,
+    Show_Date DATE NOT NULL,
+    Show_Time TIME NOT NULL,
+    Ticket_Price DECIMAL(8,2) NOT NULL,
+    FOREIGN KEY (Movie_ID) REFERENCES Movies(Movie_ID),
+    FOREIGN KEY (Screen_ID) REFERENCES Screens(Screen_ID),
+    CHECK (Ticket_Price > 0)
+);
+
+CREATE TABLE Seats (
+    Seat_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Screen_ID INT NOT NULL,
+    Seat_Number VARCHAR(10) NOT NULL,
+    Seat_Type VARCHAR(30) DEFAULT 'Regular',
+    FOREIGN KEY (Screen_ID) REFERENCES Screens(Screen_ID),
+    UNIQUE (Screen_ID, Seat_Number)
+);
+
+CREATE TABLE Bookings (
+    Booking_ID INT PRIMARY KEY AUTO_INCREMENT,
+    User_ID INT NOT NULL,
+    Show_ID INT NOT NULL,
+    Booking_Date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Total_Amount DECIMAL(10,2) NOT NULL,
+    Booking_Status VARCHAR(20) DEFAULT 'Pending',
+    FOREIGN KEY (User_ID) REFERENCES Users(User_ID),
+    FOREIGN KEY (Show_ID) REFERENCES Shows(Show_ID),
+    CHECK (Total_Amount >= 0)
+);
+
+CREATE TABLE Booking_Seats (
+    Booking_ID INT NOT NULL,
+    Seat_ID INT NOT NULL,
+    Price DECIMAL(8,2) NOT NULL,
+    PRIMARY KEY (Booking_ID, Seat_ID),
+    FOREIGN KEY (Booking_ID) REFERENCES Bookings(Booking_ID),
+    FOREIGN KEY (Seat_ID) REFERENCES Seats(Seat_ID),
+    CHECK (Price > 0)
+);
+
+CREATE TABLE Payments (
+    Payment_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Booking_ID INT NOT NULL,
+    Amount DECIMAL(10,2) NOT NULL,
