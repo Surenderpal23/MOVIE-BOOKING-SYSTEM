@@ -129,57 +129,150 @@ CREATE TABLE Refunds (
 -- Insert parent records before child records.
 -- ------------------------------------------------------------
 
+USE MovieBooking;
+
+-- 1. USERS
 INSERT INTO Users (Name, Email, Phone, Password) VALUES
-('Rahul Sharma', 'rahul@example.com', '9876500001', 'demo_hash_1'),
-('Priya Singh', 'priya@example.com', '9876500002', 'demo_hash_2'),
-('Aman Verma', 'aman@example.com', '9876500003', 'demo_hash_3');
+('Rahul Sharma','rahul@example.com','9876500001','hash001'),
+('Priya Singh','priya@example.com','9876500002','hash002'),
+('Aman Verma','aman@example.com','9876500003','hash003'),
+('Neha Gupta','neha@example.com','9876500004','hash004'),
+('Arjun Kumar','arjun@example.com','9876500005','hash005'),
+('Simran Kaur','simran@example.com','9876500006','hash006'),
+('Vikram Patel','vikram@example.com','9876500007','hash007'),
+('Anjali Mehta','anjali@example.com','9876500008','hash008'),
+('Rohit Yadav','rohit@example.com','9876500009','hash009'),
+('Karan Malhotra','karan@example.com','9876500010','hash010');
 
+-- 2. MOVIES
 INSERT INTO Movies (Title, Genre, Language, Duration, Release_Date, Rating) VALUES
-('Inception', 'Sci-Fi', 'English', 148, '2010-07-16', 8.8),
-('Interstellar', 'Sci-Fi', 'English', 169, '2014-11-07', 8.7),
-('3 Idiots', 'Comedy', 'Hindi', 170, '2009-12-25', 8.4);
+('Inception','Sci-Fi','English',148,'2010-07-16',8.8),
+('Interstellar','Sci-Fi','English',169,'2014-11-07',8.7),
+('3 Idiots','Comedy','Hindi',170,'2009-12-25',8.4),
+('Dangal','Drama','Hindi',161,'2016-12-23',8.3),
+('Jawan','Action','Hindi',169,'2023-09-07',7.0),
+('Pathaan','Action','Hindi',146,'2023-01-25',5.8),
+('Avatar','Fantasy','English',162,'2009-12-18',7.9),
+('Titanic','Romance','English',195,'1997-12-19',7.9),
+('Drishyam','Thriller','Hindi',163,'2015-07-31',8.2),
+('The Dark Knight','Action','English',152,'2008-07-18',9.0);
 
+-- 3. THEATRES
 INSERT INTO Theatres (Theatre_Name, City, Address) VALUES
-('City Cinema', 'Ludhiana', 'Ferozepur Road'),
-('Grand Movies', 'Chandigarh', 'Sector 17');
+('City Cinema','Ludhiana','Ferozepur Road'),
+('Grand Movies','Chandigarh','Sector 17'),
+('PVR Cinemas','Delhi','Connaught Place'),
+('INOX Multiplex','Mumbai','Andheri West'),
+('Galaxy Cinema','Sirsa','Hisar Road'),
+('Royal Movies','Ambala','Model Town'),
+('Star Cinema','Patiala','Leela Bhawan'),
+('Fun Cinemas','Jaipur','MI Road'),
+('Cine World','Amritsar','Lawrence Road'),
+('Dream Theatre','Panchkula','Sector 5');
 
+-- 4. SCREENS
 INSERT INTO Screens (Theatre_ID, Screen_Name, Capacity) VALUES
-(1, 'Screen 1', 100),
-(1, 'Screen 2', 80),
-(2, 'Screen 1', 120);
+(1,'Screen 1',100),
+(1,'Screen 2',80),
+(2,'Screen 1',120),
+(2,'Screen 2',90),
+(3,'Screen 1',150),
+(3,'Screen 2',100),
+(4,'Screen 1',130),
+(5,'Screen 1',80),
+(6,'Screen 1',110),
+(7,'Screen 1',95);
 
+-- 5. SHOWS
 INSERT INTO Shows (Movie_ID, Screen_ID, Show_Date, Show_Time, Ticket_Price) VALUES
-(1, 1, '2026-11-01', '18:30:00', 200.00),
-(2, 2, '2026-11-01', '20:00:00', 250.00),
-(3, 3, '2026-11-02', '17:00:00', 180.00);
+(1,1,'2026-11-01','10:00:00',200.00),
+(2,2,'2026-11-01','13:00:00',250.00),
+(3,3,'2026-11-01','16:00:00',180.00),
+(4,4,'2026-11-02','11:00:00',220.00),
+(5,5,'2026-11-02','14:00:00',300.00),
+(6,6,'2026-11-02','17:00:00',280.00),
+(7,7,'2026-11-03','12:00:00',250.00),
+(8,8,'2026-11-03','15:00:00',200.00),
+(9,9,'2026-11-04','18:00:00',190.00),
+(10,10,'2026-11-04','20:00:00',320.00);
 
+-- 6. SEATS
 INSERT INTO Seats (Screen_ID, Seat_Number, Seat_Type) VALUES
-(1, 'A1', 'Regular'),
-(1, 'A2', 'Regular'),
-(1, 'A3', 'Premium'),
-(2, 'B1', 'Regular'),
-(2, 'B2', 'Premium'),
-(3, 'C1', 'Regular');
+(1,'A1','Regular'),
+(1,'A2','Regular'),
+(1,'A3','Premium'),
+(2,'B1','Regular'),
+(2,'B2','Premium'),
+(3,'C1','Regular'),
+(3,'C2','Premium'),
+(4,'D1','Regular'),
+(5,'E1','Premium'),
+(6,'F1','Regular');
 
+-- 7. BOOKINGS
 INSERT INTO Bookings (User_ID, Show_ID, Total_Amount, Booking_Status) VALUES
-(1, 1, 400.00, 'Confirmed'),
-(2, 2, 250.00, 'Pending');
+(1,1,400.00,'Confirmed'),
+(2,2,250.00,'Confirmed'),
+(3,3,360.00,'Pending'),
+(4,4,220.00,'Confirmed'),
+(5,5,600.00,'Confirmed'),
+(6,6,280.00,'Cancelled'),
+(7,7,500.00,'Confirmed'),
+(8,8,200.00,'Pending'),
+(9,9,380.00,'Confirmed'),
+(10,10,640.00,'Confirmed');
 
+-- 8. BOOKING SEATS
 INSERT INTO Booking_Seats (Booking_ID, Seat_ID, Price) VALUES
-(1, 1, 200.00),
-(1, 2, 200.00),
-(2, 4, 250.00);
+(1,1,200.00),
+(1,2,200.00),
+(2,4,250.00),
+(3,6,180.00),
+(3,7,180.00),
+(4,8,220.00),
+(5,9,300.00),
+(6,10,280.00),
+(7,3,500.00),
+(8,5,200.00);
 
+-- 9. PAYMENTS
 INSERT INTO Payments (Booking_ID, Amount, Payment_Method, Payment_Status) VALUES
-(1, 400.00, 'UPI', 'Successful'),
-(2, 250.00, 'Card', 'Pending');
+(1,400.00,'UPI','Successful'),
+(2,250.00,'Card','Successful'),
+(3,360.00,'Net Banking','Pending'),
+(4,220.00,'UPI','Successful'),
+(5,600.00,'Card','Successful'),
+(6,280.00,'UPI','Failed'),
+(7,500.00,'Net Banking','Successful'),
+(8,200.00,'Card','Pending'),
+(9,380.00,'UPI','Successful'),
+(10,640.00,'Card','Successful');
 
+-- 10. REVIEWS
 INSERT INTO Reviews (User_ID, Movie_ID, Rating, Comment, Review_Date) VALUES
-(1, 1, 5, 'Excellent movie', '2026-10-20'),
-(2, 2, 5, 'Amazing story', '2026-10-21');
+(1,1,5,'Excellent movie','2026-10-20'),
+(2,2,5,'Amazing story','2026-10-21'),
+(3,3,4,'Funny and inspiring','2026-10-22'),
+(4,4,5,'Very motivational','2026-10-23'),
+(5,5,4,'Great action scenes','2026-10-24'),
+(6,6,3,'Good entertainment','2026-10-25'),
+(7,7,5,'Beautiful visuals','2026-10-26'),
+(8,8,4,'Emotional story','2026-10-27'),
+(9,9,5,'Excellent suspense','2026-10-28'),
+(10,10,5,'Masterpiece','2026-10-29');
 
+-- 11. REFUNDS
 INSERT INTO Refunds (Payment_ID, Refund_Amount, Refund_Date, Refund_Status) VALUES
-(1, 400.00, '2026-10-22', 'Pending');
+(1,100.00,'2026-10-22','Pending'),
+(2,250.00,'2026-10-23','Approved'),
+(3,360.00,'2026-10-24','Pending'),
+(4,50.00,'2026-10-25','Approved'),
+(5,600.00,'2026-10-26','Rejected'),
+(6,280.00,'2026-10-27','Approved'),
+(7,200.00,'2026-10-28','Pending'),
+(8,200.00,'2026-10-29','Approved'),
+(9,150.00,'2026-10-29','Pending'),
+(10,640.00,'2026-10-29','Approved');
 
 -- ------------------------------------------------------------
 -- 3. TRIGGERS
